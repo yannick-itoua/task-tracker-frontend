@@ -47,7 +47,7 @@ RUN echo '<h1>Server is working!</h1>' > ./dist/test.html
 RUN ls -la ./dist
 
 # Expose port (Railway will set the PORT env var)
-EXPOSE ${PORT:-3000}
+EXPOSE 3000
 
 # Start the server on Railway's PORT or default to 3000
-CMD ["sh", "-c", "echo 'Starting server on port ${PORT:-3000}...' && serve -s dist -l ${PORT:-3000}"]
+CMD ["sh", "-c", "PORT=${PORT:-3000} && echo 'Starting server on port '$PORT'...' && serve -s dist -l $PORT"]
