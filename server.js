@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,16 +15,33 @@ console.log(`Server will start on port: ${PORT}`);
 console.log(`Environment PORT: ${process.env.PORT}`);
 console.log(`__dirname: ${__dirname}`);
 
+// Verify dist directory exists and has files
+const distPath = path.join(__dirname, 'dist');
+console.log(`Checking dist directory: ${distPath}`);
+try {
+  const distFiles = fs.readdirSync(distPath);
+  console.log(`Dist files found: ${distFiles.join(', ')}`);
+  
+  const indexPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    console.log('index.html found - ready to serve');
+  } else {
+    console.error('ERROR: index.html not found!');
+  }
+} catch (err) {
+  console.error('ERROR: Cannot access dist directory:', err);
+}
+
 // Add request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - IP: ${req.ip}`);
   next();
 });
 
 // Health check endpoint (Railway may check this)
 app.get('/health', (req, res) => {
   console.log('Health check requested');
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString(), port: PORT });
 });
 
 // Root health check
@@ -41,7 +59,8 @@ app.use(express.static(path.join(__dirname, 'dist'), {
 // Handle React Router - send all other requests to index.html
 app.get('*', (req, res) => {
   console.log(`Serving index.html for: ${req.url}`);
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error serving index.html:', err);
       res.status(500).send('Error serving application');
@@ -51,13 +70,14 @@ app.get('*', (req, res) => {
 
 // Start server with error handling
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Server accepting connections at http://0.0.0.0:${PORT}`);
-  console.log(`Process ID: ${process.pid}`);
+  console.log(`✅ Server is running on port ${PORT}`);
+  console.log(`✅ Server accepting connections at http://0.0.0.0:${PORT}`);
+  console.log(`✅ Process ID: ${process.pid}`);
+  console.log(`✅ Server ready to handle requests`);
 });
 
 server.on('error', (err) => {
-  console.error('Server error:', err);
+  console.error('❌ Server error:', err);
 });
 
 // Graceful shutdown
