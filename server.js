@@ -2,7 +2,11 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
+// Railway provides PORT environment variable
 const PORT = process.env.PORT || 3000;
+
+console.log(`Server will start on port: ${PORT}`);
+console.log(`Environment PORT: ${process.env.PORT}`);
 
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -19,4 +23,5 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Server accepting connections at http://0.0.0.0:${PORT}`);
 });
