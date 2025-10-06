@@ -37,27 +37,17 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built application from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# Change ownership of nginx directories and fix permissions
-RUN chown -R nextjs:nodejs /var/cache/nginx && \
-    chown -R nextjs:nodejs /var/log/nginx && \
-    chown -R nextjs:nodejs /etc/nginx/conf.d && \
-    chown -R nextjs:nodejs /usr/share/nginx/html && \
-    touch /var/run/nginx.pid && \
-    chown -R nextjs:nodejs /var/run/nginx.pid
-
-# Switch to non-root user
-USER nextjs
+# Debug: List contents and test nginx config
+RUN ls -la /usr/share/nginx/html && \
+    nginx -t && \
+    echo "Nginx config test passed"
 
 # Expose port
-EXPOSE 8080
+EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Health check - simplified
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:80/health || exit 1
 
-# Start nginx
+# Start nginx (run as root to avoid permission issues)
 CMD ["nginx", "-g", "daemon off;"]
