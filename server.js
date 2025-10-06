@@ -38,19 +38,30 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint (Railway may check this)
+// Health check endpoints - Railway checks these
 app.get('/health', (req, res) => {
   console.log('Health check requested');
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString(), port: PORT });
 });
 
-// Root health check
 app.get('/healthz', (req, res) => {
   console.log('Healthz check requested');
   res.status(200).send('OK');
 });
 
-// Serve static files from the dist directory
+// Railway might check root path for health
+app.get('/', (req, res) => {
+  console.log('Root path requested - serving index.html');
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('Error serving application');
+    }
+  });
+});
+
+// Serve static files from the dist directory  
 app.use(express.static(path.join(__dirname, 'dist'), {
   fallthrough: true,
   index: false
