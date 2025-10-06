@@ -28,26 +28,29 @@ RUN npm run build
 # Debug: Check if build was successful
 RUN ls -la /app/dist
 
-# Stage 2: Serve with Node.js (Railway compatible)
+# Stage 2: Serve with Express.js (Railway compatible)
 FROM node:18-alpine AS production
 
 # Set working directory
 WORKDIR /app
 
-# Install a simple static file server
-RUN npm install -g serve
+# Copy package.json for production dependencies
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Copy our custom server
+COPY server.js ./
 
 # Copy built application from build stage
 COPY --from=build /app/dist ./dist
 
-# Create a simple test file
-RUN echo '<h1>Server is working!</h1>' > ./dist/test.html
-
 # Debug: List contents
 RUN ls -la ./dist
 
-# Expose port (Railway will set the PORT env var)
+# Expose port 
 EXPOSE 3000
 
-# Start the server on Railway's PORT or default to 3000
-CMD ["sh", "-c", "PORT=${PORT:-3000} && echo 'Starting server on port '$PORT'...' && serve -s dist -l $PORT"]
+# Start our Express server
+CMD ["node", "server.js"]
