@@ -6,106 +6,51 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+console.log('🚀 Starting Task Tracker Frontend Server...');
 
-// Railway provides PORT environment variable
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log(`Server will start on port: ${PORT}`);
-console.log(`Environment PORT: ${process.env.PORT}`);
-console.log(`__dirname: ${__dirname}`);
+console.log(`📡 PORT from environment: ${process.env.PORT}`);
+console.log(`📁 Working directory: ${__dirname}`);
 
-// Verify dist directory exists and has files
+// Verify dist directory
 const distPath = path.join(__dirname, 'dist');
-console.log(`Checking dist directory: ${distPath}`);
-try {
-  const distFiles = fs.readdirSync(distPath);
-  console.log(`Dist files found: ${distFiles.join(', ')}`);
-  
-  const indexPath = path.join(distPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log('index.html found - ready to serve');
-  } else {
-    console.error('ERROR: index.html not found!');
-  }
-} catch (err) {
-  console.error('ERROR: Cannot access dist directory:', err);
+if (fs.existsSync(distPath)) {
+  const files = fs.readdirSync(distPath);
+  console.log(`📦 Static files ready: ${files.join(', ')}`);
+} else {
+  console.error('❌ Dist directory not found!');
+  process.exit(1);
 }
 
-// Add request logging
+// Middleware for all requests
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - IP: ${req.ip}`);
+  console.log(`📨 ${req.method} ${req.url} from ${req.ip || 'unknown'}`);
   next();
 });
 
 // Simple test endpoint
 app.get('/test', (req, res) => {
-  console.log('Test endpoint requested');
-  res.status(200).send('Server is working!');
+  res.send('✅ Server is working! Task Tracker Frontend is ready.');
 });
 
-// Health check endpoints - Railway checks these
+// Health endpoints
 app.get('/health', (req, res) => {
-  console.log('Health check requested');
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString(), port: PORT });
+  res.json({ status: 'healthy', port: PORT, timestamp: new Date().toISOString() });
 });
 
-app.get('/healthz', (req, res) => {
-  console.log('Healthz check requested');
-  res.status(200).send('OK');
-});
+// Serve static files
+app.use(express.static(distPath));
 
-// Railway might check root path for health
-app.get('/', (req, res) => {
-  console.log('Root path requested - serving index.html');
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Error serving application');
-    }
-  });
-});
-
-// Serve static files from the dist directory  
-app.use(express.static(path.join(__dirname, 'dist'), {
-  fallthrough: true,
-  index: false
-}));
-
-// Handle React Router - send all other requests to index.html
+// Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
-  console.log(`Serving index.html for: ${req.url}`);
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Error serving application');
-    }
-  });
+  const indexPath = path.join(distPath, 'index.html');
+  res.sendFile(indexPath);
 });
 
-// Start server with explicit binding for Railway
-const HOST = '0.0.0.0';
-const server = app.listen(PORT, HOST, () => {
-  console.log(`✅ Server is running on ${HOST}:${PORT}`);
-  console.log(`✅ Server accepting connections at http://${HOST}:${PORT}`);
-  console.log(`✅ Process ID: ${process.pid}`);
-  console.log(`✅ Server ready to handle requests`);
-  
-  // Test server binding
-  console.log(`✅ Server address: ${JSON.stringify(server.address())}`);
-});
-
-server.on('error', (err) => {
-  console.error('❌ Server error:', err);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🟢 Server running on 0.0.0.0:${PORT}`);
+  console.log(`🌐 Ready to serve Task Tracker Frontend`);
 });
