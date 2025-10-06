@@ -41,10 +41,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Change ownership of nginx directories
+# Change ownership of nginx directories and fix permissions
 RUN chown -R nextjs:nodejs /var/cache/nginx && \
     chown -R nextjs:nodejs /var/log/nginx && \
     chown -R nextjs:nodejs /etc/nginx/conf.d && \
+    chown -R nextjs:nodejs /usr/share/nginx/html && \
     touch /var/run/nginx.pid && \
     chown -R nextjs:nodejs /var/run/nginx.pid
 
@@ -52,11 +53,11 @@ RUN chown -R nextjs:nodejs /var/cache/nginx && \
 USER nextjs
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
