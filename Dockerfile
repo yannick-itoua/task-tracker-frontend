@@ -15,6 +15,13 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Set build-time environment variable
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
+# Debug: Show environment variables
+RUN echo "Building with VITE_API_URL: $VITE_API_URL"
+
 # Build the application
 RUN npm run build
 
@@ -49,7 +56,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:80 || exit 1
+    CMD curl -f http://localhost:80/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
