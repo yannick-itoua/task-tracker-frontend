@@ -28,30 +28,26 @@ RUN npm run build
 # Debug: Check if build was successful
 RUN ls -la /app/dist
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine AS production
+# Stage 2: Serve with Node.js (Railway compatible)
+FROM node:18-alpine AS production
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+# Set working directory
+WORKDIR /app
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Install a simple static file server
+RUN npm install -g serve
 
 # Copy built application from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist ./dist
 
 # Create a simple test file
-RUN echo '<h1>Nginx is working!</h1>' > /usr/share/nginx/html/test.html
+RUN echo '<h1>Server is working!</h1>' > ./dist/test.html
 
-# Debug: List contents and test nginx config
-RUN ls -la /usr/share/nginx/html && \
-    echo "Contents of nginx html directory:" && \
-    cat /usr/share/nginx/html/index.html | head -10 || echo "No index.html found" && \
-    nginx -t && \
-    echo "Nginx config test passed"
+# Debug: List contents
+RUN ls -la ./dist
 
-# Expose port
-EXPOSE 80
+# Expose port (Railway will set the PORT env var)
+EXPOSE ${PORT:-3000}
 
-# Start nginx with verbose output
-CMD ["sh", "-c", "echo 'Starting nginx with debug info...' && nginx -t && nginx -g 'daemon off; error_log /dev/stderr info;'"]
+# Start the server on Railway's PORT or default to 3000
+CMD ["sh", "-c", "echo 'Starting server on port ${PORT:-3000}...' && serve -s dist -l ${PORT:-3000}"]
