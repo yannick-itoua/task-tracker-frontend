@@ -2,11 +2,15 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Remove trailing slash if present
+const baseURL = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: `${baseURL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout for Railway
 });
 
 // Request interceptor for error handling
