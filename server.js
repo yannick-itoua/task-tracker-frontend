@@ -38,6 +38,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Simple test endpoint
+app.get('/test', (req, res) => {
+  console.log('Test endpoint requested');
+  res.status(200).send('Server is working!');
+});
+
 // Health check endpoints - Railway checks these
 app.get('/health', (req, res) => {
   console.log('Health check requested');
@@ -79,12 +85,16 @@ app.get('*', (req, res) => {
   });
 });
 
-// Start server with error handling
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server is running on port ${PORT}`);
-  console.log(`✅ Server accepting connections at http://0.0.0.0:${PORT}`);
+// Start server with explicit binding for Railway
+const HOST = '0.0.0.0';
+const server = app.listen(PORT, HOST, () => {
+  console.log(`✅ Server is running on ${HOST}:${PORT}`);
+  console.log(`✅ Server accepting connections at http://${HOST}:${PORT}`);
   console.log(`✅ Process ID: ${process.pid}`);
   console.log(`✅ Server ready to handle requests`);
+  
+  // Test server binding
+  console.log(`✅ Server address: ${JSON.stringify(server.address())}`);
 });
 
 server.on('error', (err) => {
